@@ -1,28 +1,25 @@
 "use client"
 
-import { useState } from "react"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Music, Play, Pause, Clock, Disc3, AlertCircle } from "lucide-react"
-import { OpenAppButton } from "@/components/open-app-button"
+import { AlertCircle } from "lucide-react"
+import { VideoThumbnail } from "./video-thumbnail"
+import { OpenAppButton } from "./open-app-button"
+import Image from "next/image"
+import { useOpenApp } from "@/hooks/use-open-app"
+import { useState, useEffect } from "react"
 
 interface Video {
   _id: string
   name?: string
   caption?: string
   thumbnailUrl?: string
+  viewCount?: number
   owner?: {
     username?: string
     name?: string
   }
   isPinned?: boolean
-  tags?: string[]
-  category?: {
-    name?: string
-  }
 }
 
 interface PlaylistData {
@@ -45,112 +42,52 @@ interface PlaylistData {
   }
 }
 
-interface Track {
-  id: string
-  title: string
-  artist: string
-  album: string
-  duration: string
-  genre: string
-}
-
-interface Playlist {
-  id: string
-  name: string
-  description: string
-  cover: string
-  tracks: Track[]
-  totalDuration: string
-}
-
 interface PlaylistViewProps {
   playlistData: PlaylistData | null
   error: string | null
   playlistId?: string
 }
 
-function formatDuration(seconds: number): string {
-  const mins = Math.floor(seconds / 60)
-  const secs = seconds % 60
-  return `${mins}:${secs.toString().padStart(2, '0')}`
-}
-
-function calculateTotalDuration(tracks: Track[]): string {
-  // Since we don't have actual duration, we'll estimate based on average video length
-  // Assuming average video is ~3-4 minutes
-  const totalMinutes = tracks.length * 3.5
-  const hours = Math.floor(totalMinutes / 60)
-  const minutes = Math.floor(totalMinutes % 60)
-  
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`
-  }
-  return `${minutes}m`
-}
-
-function transformPlaylistData(playlistData: PlaylistData | null): Playlist | null {
-  if (!playlistData?.data) {
-    return null
-  }
-
-  const { data } = playlistData
-  const videos = data.videos || []
-
-  const tracks: Track[] = videos.map((video, index) => {
-    const title = video.name || video.caption || `Video ${index + 1}`
-    const artist = video.owner?.username || video.owner?.name || "Unknown Artist"
-    const album = data.name || "Unknown Album"
-    const genre = video.category?.name || video.tags?.[0] || "Uncategorized"
-    // Default duration since video model doesn't have duration field
-    const duration = "3:45"
-
-    return {
-      id: video._id,
-      title,
-      artist,
-      album,
-      duration,
-      genre,
-    }
-  })
-
-  return {
-    id: data._id,
-    name: data.name || "Untitled Playlist",
-    description: `Playlist by ${data.owner?.username || data.owner?.name || "Unknown"}`,
-    cover: data.imageUrl || "/placeholder.svg",
-    tracks,
-    totalDuration: calculateTotalDuration(tracks),
-  }
-}
-
 export function PlaylistView({ playlistData, error, playlistId }: PlaylistViewProps) {
-  const [playingId, setPlayingId] = useState<string | null>(null)
-
   const loading = playlistData === null && error === null
-  const playlist = transformPlaylistData(playlistData)
-  const displayPlaylistId = playlistId || playlist?.id || ""
+  const displayPlaylistId = playlistId || playlistData?.data?._id || ""
+  const { detectDevice, openDeepLink, openAppStore } = useOpenApp()
+  const [device, setDevice] = useState<"ios" | "android" | "desktop">("desktop")
 
-  const togglePlay = (id: string) => {
-    setPlayingId(playingId === id ? null : id)
+  useEffect(() => {
+    setDevice(detectDevice())
+  }, [detectDevice])
+
+  // Limit to 6 videos
+  const displayVideos = playlistData?.data?.videos?.slice(0, 6) || []
+
+  const handleHeaderClick = () => {
+    if (displayPlaylistId) {
+      if (device === "desktop") {
+        openAppStore("ios")
+      } else {
+        openDeepLink(displayPlaylistId)
+      }
+    }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen p-4 md:p-8 lg:p-12">
-        <div className="max-w-7xl mx-auto space-y-8">
-          <div className="flex flex-col md:flex-row gap-8">
-            <Skeleton className="w-full md:w-80 h-80 rounded-xl" />
-            <div className="flex-1 space-y-4">
-              <Skeleton className="h-12 w-3/4" />
-              <Skeleton className="h-6 w-full" />
-              <Skeleton className="h-6 w-1/2" />
+      <div className="min-h-screen bg-black">
+        <div className="max-w-md mx-auto">
+          <div className="relative">
+            <Skeleton className="w-full h-[400px] bg-[#161618]" />
+            <div className="absolute bottom-0 left-0 right-0 p-6 space-y-4">
+              <Skeleton className="h-8 w-3/4 bg-[#353539]" />
+              <Skeleton className="h-6 w-1/2 bg-[#353539]" />
             </div>
           </div>
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <Skeleton key={i} className="h-20 w-full" />
-            ))}
+          <div className="p-4 md:p-6 lg:p-8">
+            <div className="grid grid-cols-3 gap-2">
+              {[...Array(6)].map((_, i) => (
+                <Skeleton key={i} className="aspect-[4/5] rounded-lg bg-[#161618]" />
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -159,146 +96,111 @@ export function PlaylistView({ playlistData, error, playlistId }: PlaylistViewPr
 
   if (error) {
     return (
-      <div className="min-h-screen p-4 md:p-8 lg:p-12">
-        <div className="max-w-7xl mx-auto">
-          <Alert variant="destructive">
+      <div className="min-h-screen bg-black p-4 md:p-8 lg:p-12 flex items-center justify-center">
+        <div className="max-w-md w-full mx-auto">
+          <Alert variant="destructive" className="bg-[#161618] border-[#353539]">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+            <AlertDescription className="text-white">{error}</AlertDescription>
           </Alert>
         </div>
       </div>
     )
   }
 
-  if (!playlist) {
+  if (!playlistData?.data) {
     return (
-      <div className="min-h-screen p-4 md:p-8 lg:p-12">
-        <div className="max-w-7xl mx-auto">
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>Playlist not found</AlertDescription>
+      <div className="min-h-screen bg-black p-4 md:p-8 lg:p-12 flex items-center justify-center">
+        <div className="max-w-md w-full mx-auto">
+          <Alert className="bg-[#161618] border-[#353539]">
+            <AlertCircle className="h-4 w-4 text-white" />
+            <AlertDescription className="text-white">Playlist not found</AlertDescription>
           </Alert>
         </div>
       </div>
     )
   }
+
+  const { data } = playlistData
+  const playlistName = data.name || "Untitled Playlist"
+  const username = data.owner?.username || data.owner?.name || "Unknown"
+  const backgroundImage = data.imageUrl
 
   return (
-    <div className="min-h-screen p-4 md:p-8 lg:p-12">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Playlist Header */}
-        <div className="flex flex-col md:flex-row gap-6 md:gap-8">
-          <div className="relative group w-full md:w-80 h-80 flex-shrink-0">
-            <img
-              src={playlist.cover || "/placeholder.svg"}
-              alt={playlist.name}
-              className="w-full h-full object-cover rounded-xl shadow-2xl"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
-
-          <div className="flex flex-col justify-end space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Music className="w-5 h-5 text-primary" />
-                <span className="text-sm font-medium text-primary">{"PLAYLIST"}</span>
-              </div>
-              {displayPlaylistId && (
-                <OpenAppButton playlistId={displayPlaylistId} variant="outline" size="sm" />
-              )}
-            </div>
-
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-balance">{playlist.name}</h1>
-
-            <p className="text-lg text-muted-foreground leading-relaxed max-w-2xl text-pretty">
-              {playlist.description}
-            </p>
-
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <Disc3 className="w-4 h-4" />
-                {playlist.tracks.length} tracks
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Clock className="w-4 h-4" />
-                {playlist.totalDuration}
-              </span>
-            </div>
+    <div className="min-h-screen bg-black text-white">
+      <div className="max-w-md mx-auto">
+        {/* Header Section with Background Image */}
+        <button
+          onClick={handleHeaderClick}
+          className="relative w-full h-[400px] md:h-[500px] overflow-hidden cursor-pointer transition-opacity hover:opacity-95 active:opacity-90"
+          type="button"
+        >
+        {backgroundImage && (
+          <Image
+            src={backgroundImage}
+            alt={playlistName}
+            fill
+            className="object-cover"
+            priority
+            sizes="100vw"
+          />
+        )}
+        
+        {/* Top Gradient Overlay - 15% height */}
+        <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black via-black/60 to-transparent" 
+             style={{ height: '15%' }} />
+        
+        {/* Bottom Gradient Overlay - 200px height */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/90 to-transparent" 
+             style={{ height: '200px' }} />
+        
+        {/* Content Overlay */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 pb-8 z-10">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-white mb-2 text-center">
+            {playlistName}
+          </h1>
+          <div className="flex items-center justify-center gap-1">
+            <span className="text-white text-base md:text-lg">by</span>
+            <span className="text-[#24FF96] text-base md:text-lg font-semibold">
+              @{username}
+            </span>
           </div>
         </div>
+        </button>
 
-        {/* Track List */}
-        <Card className="overflow-hidden border-border bg-card/50 backdrop-blur-sm">
-          <div className="divide-y divide-border">
-            {/* Header */}
-            <div className="grid grid-cols-[auto_1fr_auto_auto] md:grid-cols-[auto_2fr_1.5fr_1fr_auto_auto] gap-4 px-4 md:px-6 py-3 text-sm font-medium text-muted-foreground">
-              <span className="w-8">#</span>
-              <span>{"Title"}</span>
-              <span className="hidden md:block">{"Album"}</span>
-              <span className="hidden md:block">{"Genre"}</span>
-              <span className="hidden md:block">
-                <Clock className="w-4 h-4" />
-              </span>
-              <span className="w-10" />
+        {/* Video Grid Section */}
+        <div className="p-4 md:p-6 lg:p-8">
+        {displayVideos.length > 0 ? (
+          <>
+            <div className="grid grid-cols-3 gap-2 md:gap-3 mb-6">
+              {displayVideos.map((video) => (
+                <VideoThumbnail
+                  key={video._id}
+                  thumbnailUrl={video.thumbnailUrl}
+                  viewCount={video.viewCount || 0}
+                  playlistId={displayPlaylistId}
+                />
+              ))}
             </div>
 
-            {/* Tracks */}
-            {playlist.tracks.map((track, index) => (
-              <div
-                key={track.id}
-                className="grid grid-cols-[auto_1fr_auto_auto] md:grid-cols-[auto_2fr_1.5fr_1fr_auto_auto] gap-4 px-4 md:px-6 py-4 hover:bg-muted/50 transition-colors group"
-              >
-                <span className="w-8 text-muted-foreground text-sm flex items-center">
-                  {playingId === track.id ? (
-                    <span className="flex gap-0.5">
-                      <span className="w-0.5 h-4 bg-primary animate-pulse" style={{ animationDelay: "0ms" }} />
-                      <span className="w-0.5 h-4 bg-primary animate-pulse" style={{ animationDelay: "150ms" }} />
-                      <span className="w-0.5 h-4 bg-primary animate-pulse" style={{ animationDelay: "300ms" }} />
-                    </span>
-                  ) : (
-                    index + 1
-                  )}
-                </span>
-
-                <div className="min-w-0">
-                  <div
-                    className={`font-medium truncate ${playingId === track.id ? "text-primary" : "text-foreground"}`}
-                  >
-                    {track.title}
-                  </div>
-                  <div className="text-sm text-muted-foreground truncate">{track.artist}</div>
-                </div>
-
-                <div className="hidden md:flex items-center text-sm text-muted-foreground truncate">{track.album}</div>
-
-                <div className="hidden md:flex items-center">
-                  <Badge variant="secondary" className="text-xs">
-                    {track.genre}
-                  </Badge>
-                </div>
-
-                <div className="hidden md:flex items-center text-sm text-muted-foreground tabular-nums">
-                  {track.duration}
-                </div>
-
-                <div className="flex items-center justify-end w-10">
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => togglePlay(track.id)}
-                  >
-                    {playingId === track.id ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                  </Button>
-                </div>
+            {/* View All Button */}
+            {(playlistData.pagination?.totalPages > 0 || (data.videos?.length || 0) > 6) && (
+              <div className="flex justify-center mt-6">
+                <OpenAppButton 
+                  playlistId={displayPlaylistId} 
+                  variant="default"
+                  size="lg"
+                  className="bg-[#24FF96] text-black hover:bg-[#24FF96]/90 font-medium px-8 py-6 text-base"
+                />
               </div>
-            ))}
+            )}
+          </>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-[#A8A7AD] text-lg">No videos in this playlist</p>
           </div>
-        </Card>
+        )}
+        </div>
       </div>
-      {displayPlaylistId && (
-        <OpenAppButton playlistId={displayPlaylistId} isFloating={true} />
-      )}
     </div>
   )
 }

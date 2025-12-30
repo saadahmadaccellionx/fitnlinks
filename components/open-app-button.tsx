@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -17,6 +18,7 @@ interface OpenAppButtonProps {
   size?: "default" | "sm" | "lg" | "icon"
   className?: string
   isFloating?: boolean
+  buttonText?: string
 }
 
 export function OpenAppButton({
@@ -25,9 +27,16 @@ export function OpenAppButton({
   size = "default",
   className,
   isFloating = false,
+  buttonText = "open app",
 }: OpenAppButtonProps) {
   const { detectDevice, openDeepLink, openAppStore } = useOpenApp()
-  const device = detectDevice()
+  // Start with "desktop" to match server-side rendering, then update after hydration
+  const [device, setDevice] = useState<"ios" | "android" | "desktop">("desktop")
+
+  useEffect(() => {
+    // Only detect device on client side after hydration
+    setDevice(detectDevice())
+  }, [detectDevice])
 
   const handleClick = () => {
     // On mobile, try deep link first
@@ -42,6 +51,12 @@ export function OpenAppButton({
     openAppStore("android")
   }
 
+  // Determine button text based on device
+  const getButtonText = () => {
+    if (buttonText) return buttonText
+    return device === "desktop" ? "Get App" : "Open App"
+  }
+
   // On desktop, show dropdown with both options
   if (device === "desktop") {
     return (
@@ -51,21 +66,21 @@ export function OpenAppButton({
             variant={variant}
             size={size}
             className={cn(
-              "gap-2",
+              "gap-2 bg-[#24FF96] text-black hover:bg-[#24FF96]/90",
               isFloating && "fixed bottom-6 right-6 z-50 shadow-lg rounded-full",
               className
             )}
           >
             <Smartphone className="h-4 w-4" />
-            <span>open app</span>
+            <span>{getButtonText()}</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={handleIOSClick}>
+        <DropdownMenuContent align="end" className="bg-[#161618] border-[#353539]">
+          <DropdownMenuItem onClick={handleIOSClick} className="text-white hover:bg-[#353539]">
             <Apple className="h-4 w-4 mr-2" />
             Get App for iOS
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleAndroidClick}>
+          <DropdownMenuItem onClick={handleAndroidClick} className="text-white hover:bg-[#353539]">
             <Android className="h-4 w-4 mr-2" />
             Get App for Android
           </DropdownMenuItem>
@@ -81,13 +96,13 @@ export function OpenAppButton({
       variant={variant}
       size={size}
       className={cn(
-        "gap-2",
+        "gap-2 bg-[#24FF96] text-black hover:bg-[#24FF96]/90",
         isFloating && "fixed bottom-6 right-6 z-50 shadow-lg rounded-full",
         className
       )}
     >
       <Smartphone className="h-4 w-4" />
-      <span>open app</span>
+      <span>{getButtonText()}</span>
     </Button>
   )
 }

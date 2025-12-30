@@ -4,27 +4,27 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Updated theme for music playlist app with dark aesthetic */
-  --background: oklch(0.15 0 0);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.18 0.01 265);
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.18 0 0);
-  --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.65 0.24 265);
-  --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.25 0.02 265);
-  --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(0.25 0 0);
-  --muted-foreground: oklch(0.6 0 0);
-  --accent: oklch(0.7 0.19 300);
-  --accent-foreground: oklch(0.98 0 0);
+  /* FITN App Theme Colors */
+  --background: #000000;
+  --foreground: #FFFFFF;
+  --card: #161618;
+  --card-foreground: #FFFFFF;
+  --popover: #161618;
+  --popover-foreground: #FFFFFF;
+  --primary: #24FF96;
+  --primary-foreground: #000000;
+  --secondary: #353539;
+  --secondary-foreground: #FFFFFF;
+  --muted: #353539;
+  --muted-foreground: #A8A7AD;
+  --accent: #24FF96;
+  --accent-foreground: #000000;
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.3 0.02 265);
-  --input: oklch(0.25 0.02 265);
-  --ring: oklch(0.65 0.24 265);
-  --chart-1: oklch(0.65 0.24 265);
+  --border: #353539;
+  --input: #353539;
+  --ring: #24FF96;
+  --chart-1: #24FF96;
   --chart-2: oklch(0.7 0.19 300);
   --chart-3: oklch(0.6 0.2 340);
   --chart-4: oklch(0.55 0.22 280);
@@ -41,26 +41,26 @@
 }
 
 .dark {
-  --background: oklch(0.15 0 0);
-  --foreground: oklch(0.98 0 0);
-  --card: oklch(0.18 0.01 265);
-  --card-foreground: oklch(0.98 0 0);
-  --popover: oklch(0.18 0 0);
-  --popover-foreground: oklch(0.98 0 0);
-  --primary: oklch(0.65 0.24 265);
-  --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.25 0.02 265);
-  --secondary-foreground: oklch(0.98 0 0);
-  --muted: oklch(0.25 0 0);
-  --muted-foreground: oklch(0.6 0 0);
-  --accent: oklch(0.7 0.19 300);
-  --accent-foreground: oklch(0.98 0 0);
+  --background: #000000;
+  --foreground: #FFFFFF;
+  --card: #161618;
+  --card-foreground: #FFFFFF;
+  --popover: #161618;
+  --popover-foreground: #FFFFFF;
+  --primary: #24FF96;
+  --primary-foreground: #000000;
+  --secondary: #353539;
+  --secondary-foreground: #FFFFFF;
+  --muted: #353539;
+  --muted-foreground: #A8A7AD;
+  --accent: #24FF96;
+  --accent-foreground: #000000;
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.3 0.02 265);
-  --input: oklch(0.25 0.02 265);
-  --ring: oklch(0.65 0.24 265);
-  --chart-1: oklch(0.488 0.243 264.376);
+  --border: #353539;
+  --input: #353539;
+  --ring: #24FF96;
+  --chart-1: #24FF96;
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);

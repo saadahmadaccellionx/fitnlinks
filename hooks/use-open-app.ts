@@ -24,7 +24,9 @@ export function useOpenApp() {
 
   const openDeepLink = useCallback(
     (playlistId: string) => {
-      const deepLink = `myapp://PlaylistDetail?id=${playlistId}`
+      // Properly encode the playlistId to handle special characters
+      const encodedPlaylistId = encodeURIComponent(playlistId)
+      const deepLink = `myapp://PlaylistDetail?id=${encodedPlaylistId}`
       const device = detectDevice()
       
       // Set a timeout to detect if app didn't open
@@ -47,8 +49,24 @@ export function useOpenApp() {
       blurHandler = handleBlur
       window.addEventListener("blur", blurHandler, { once: true })
 
-      // Try to open the deep link
-      window.location.href = deepLink
+      // iOS requires a different approach - use an anchor element or iframe
+      if (device === "ios") {
+        // For iOS, use an anchor element which is more reliable
+        const link = document.createElement("a")
+        link.href = deepLink
+        link.style.display = "none"
+        document.body.appendChild(link)
+        link.click()
+        // Remove the link after a short delay
+        setTimeout(() => {
+          if (document.body.contains(link)) {
+            document.body.removeChild(link)
+          }
+        }, 100)
+      } else {
+        // For Android and desktop, use window.location.href
+        window.location.href = deepLink
+      }
 
       timeout = setTimeout(() => {
         if (device === "ios") {
